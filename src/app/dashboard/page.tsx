@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import AddReviewModal from '@/components/AddReviewModal'
+import UpgradeBanner from '@/components/upgradebanner'
 import { PLANS } from '@/lib/plans'
 
 interface Review {
@@ -98,7 +99,7 @@ export default function DashboardPage() {
         <AddReviewModal onClose={() => setShowModal(false)} onAdded={fetchData} />
       )}
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">
             Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}
@@ -112,6 +113,9 @@ export default function DashboardPage() {
           + Add Review
         </button>
       </div>
+
+      {/* Upgrade Banner */}
+      <UpgradeBanner plan={plan} responsesUsed={responsesUsed} />
 
       {error && (
         <div className="bg-red-950 border border-red-700 text-red-400 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
@@ -143,7 +147,9 @@ export default function DashboardPage() {
             <p className="text-3xl font-bold text-white mt-1">∞</p>
           ) : (
             <>
-              <p className="text-3xl font-bold text-white mt-1">{responsesUsed}<span className="text-gray-500 text-lg">/{responseLimit}</span></p>
+              <p className="text-3xl font-bold text-white mt-1">
+                {responsesUsed}<span className="text-gray-500 text-lg">/{responseLimit}</span>
+              </p>
               <div className="mt-2 bg-gray-800 rounded-full h-1.5">
                 <div
                   className={`h-1.5 rounded-full transition-all ${usagePercent >= 80 ? 'bg-red-500' : 'bg-blue-500'}`}

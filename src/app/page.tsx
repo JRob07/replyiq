@@ -140,9 +140,11 @@ export default function LandingPage() {
         padding: '0 24px'
       }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
-          <span className="font-display" style={{ color: 'white', fontSize: 22, letterSpacing: '-0.02em' }}>
-            Reply<span style={{ color: '#60a5fa' }}>IQ</span>
-          </span>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+  <span className="font-display" style={{ color: 'white', fontSize: 22, letterSpacing: '-0.02em' }}>
+    Reply<span style={{ color: '#60a5fa' }}>IQ</span>
+  </span>
+</Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
             <a href="#pricing" className="nav-link hide-mobile">Pricing</a>
             <Link href="/login" className="nav-link">Sign In</Link>
@@ -276,19 +278,19 @@ export default function LandingPage() {
         <div className="grid-3">
           {[
             {
-              name: 'Starter', price: '$19', period: '/mo',
+              name: 'Starter', price: '$19', period: '/mo', plan: 'starter',
               features: ['25 AI responses/month', 'Google & Yelp reviews', '3 response tones', 'Copy to clipboard'],
               cta: 'Get Started', popular: false,
               style: { padding: 32, borderRadius: 16 }
             },
             {
-              name: 'Pro', price: '$49', period: '/mo',
+              name: 'Pro', price: '$49', period: '/mo', plan: 'pro',
               features: ['Unlimited AI responses', 'Google & Yelp reviews', '3 response tones', 'Priority support', 'Multi-location ready'],
               cta: 'Get Pro', popular: true,
               style: { padding: 32, borderRadius: 16, background: 'rgba(59,130,246,0.08)', borderColor: 'rgba(59,130,246,0.3)' }
             },
             {
-              name: 'Agency', price: '$149', period: '/mo',
+              name: 'Agency', price: '$149', period: '/mo', plan: 'agency',
               features: ['Unlimited AI responses', 'Up to 20 client accounts', 'White-label branding', 'Custom subdomain', 'Priority support'],
               cta: 'Get Agency', popular: false,
               style: { padding: 32, borderRadius: 16 }
@@ -312,7 +314,11 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className={plan.popular ? 'btn-primary' : 'btn-secondary'} style={{ width: '100%', textAlign: 'center', display: 'block' }}>
+              <Link
+                href={`/signup?plan=${plan.plan}`}
+                className={plan.popular ? 'btn-primary' : 'btn-secondary'}
+                style={{ width: '100%', textAlign: 'center', display: 'block' }}
+              >
                 {plan.cta}
               </Link>
             </div>

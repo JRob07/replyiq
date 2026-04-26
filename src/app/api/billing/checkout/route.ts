@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { stripe } from '@/lib/stripe'
+import { stripe, } from '@/lib/stripe'
 import { PLANS } from '@/lib/plans'
 import { NextResponse } from 'next/server'
 
@@ -21,7 +21,6 @@ export async function POST(request: Request) {
 
     let customerId = profile?.stripe_customer_id
 
-    // Create Stripe customer if doesn't exist
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email,
@@ -39,7 +38,7 @@ export async function POST(request: Request) {
       line_items: [{ price: selectedPlan.priceId, quantity: 1 }],
       mode: 'subscription',
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?canceled=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
       metadata: { supabase_id: user.id, plan }
     })
 

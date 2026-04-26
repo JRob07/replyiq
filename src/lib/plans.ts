@@ -1,7 +1,7 @@
 export const PLANS = {
   starter: {
     name: 'Starter',
-    price: 19,
+    price: 29,
     priceId: 'price_1TPqHq2f9f4JY5VUJfNVSWf4',
     limit: 25,
     features: [
