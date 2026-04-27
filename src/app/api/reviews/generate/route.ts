@@ -1,102 +1,343 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import OpenAI from 'openai'
-import { PLANS } from '@/lib/plans'
+import { createClient } from '@/lib/supabase/server'
+import { PLANS, type PlanKey } from '@/lib/plans'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+type Tone = 'professional' | 'friendly' | 'apologetic'
 
-export async function POST(request: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+type GenerateRequestBody = {
+  reviewId?: string
+  reviewText?: string
+  reviewerName?: string
+  rating?: number
+  platform?: string
+  tone?: Tone
+}
 
-  const { review_id, tone } = await request.json()
+type ProfileRow = {
+  id: string
+  plan: string | null
+  plan_status: string | null
+  responses_used: number | null
+  usage_reset_date: string | null
+}
 
-  // Get profile with usage data
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+type ReviewRow = {
+  id: string
+  user_id: string
+  platform: string | null
+  reviewer_name: string | null
+  rating: number | null
+  review_text: string | null
+  ai_response: string | null
+  response_status: string | null
+}
 
-  if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
 
-  // Reset usage if new month
+const VALID_TONES: Tone[] = ['professional', 'friendly', 'apologetic']
+
+const isTone = (value: unknown): value is Tone => {
+  return typeof value === 'string' && VALID_TONES.includes(value as Tone)
+}
+
+const isPlanKey = (value: string | null | undefined): value is PlanKey => {
+  return value === 'starter' || value === 'pro' || value === 'agency'
+}
+
+const getMonthlyLimit = (profile: ProfileRow): number => {
+  if (!isPlanKey(profile.plan)) {
+    return 5
+  }
+
+  return PLANS[profile.plan].limit
+}
+
+const shouldResetUsage = (usageResetDate: string | null): boolean => {
+  if (!usageResetDate) {
+    return true
+  }
+
+  return new Date(usageResetDate).getTime() <= Date.now()
+}
+
+const getNextUsageResetDate = (): string => {
   const now = new Date()
-  const resetDate = new Date(profile.usage_reset_date)
-  if (now >= resetDate) {
-    await supabase.from('profiles').update({
-      responses_used: 0,
-      usage_reset_date: new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
-    }).eq('id', user.id)
-    profile.responses_used = 0
-  }
 
-  // Check plan limits
-  const plan = profile.plan || 'free'
-  const planConfig = PLANS[plan as keyof typeof PLANS]
-  
-  if (plan === 'free' && profile.responses_used >= 3) {
-    return NextResponse.json({ 
-      error: 'Free limit reached. Upgrade to continue generating responses.',
-      upgrade: true
-    }, { status: 403 })
-  }
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0)
+  ).toISOString()
+}
 
-  if (planConfig && planConfig.limit !== -1 && profile.responses_used >= planConfig.limit) {
-    return NextResponse.json({ 
-      error: `You've used all ${planConfig.limit} responses this month. Upgrade or wait until next month.`,
-      upgrade: true
-    }, { status: 403 })
-  }
+const buildSystemPrompt = () => {
+  return [
+    'You are ReplyIQ, an expert AI assistant that writes polished review responses for local service businesses.',
+    'Write responses that sound human, specific, calm, and professional.',
+    'Avoid sounding robotic, overly long, defensive, or generic.',
+    'Do not mention that you are an AI.',
+    'Do not invent facts that are not present in the review.',
+    'Keep responses concise: usually 2 to 5 sentences.',
+  ].join(' ')
+}
 
-  // Get review
-  const { data: review, error: reviewError } = await supabase
-    .from('reviews')
-    .select('*')
-    .eq('id', review_id)
-    .eq('user_id', user.id)
-    .single()
+const buildUserPrompt = ({
+  reviewText,
+  reviewerName,
+  rating,
+  platform,
+  tone,
+}: {
+  reviewText: string
+  reviewerName?: string | null
+  rating?: number | null
+  platform?: string | null
+  tone: Tone
+}) => {
+  const toneInstruction =
+    tone === 'professional'
+      ? 'Use a polished, professional tone.'
+      : tone === 'friendly'
+        ? 'Use a warm, friendly, approachable tone.'
+        : 'Use an empathetic, accountable, apologetic tone without over-admitting fault.'
 
-  if (reviewError || !review) return NextResponse.json({ error: 'Review not found' }, { status: 404 })
+  return `
+Write a personalized public response to this customer review.
 
-  const businessName = profile?.business_name || 'our business'
-  const toneMap: Record<string, string> = {
-    professional: 'professional and courteous',
-    friendly: 'warm, friendly and personable',
-    apologetic: 'empathetic and apologetic'
-  }
-  const selectedTone = toneMap[tone] || toneMap.professional
+Tone: ${tone}
+Tone instruction: ${toneInstruction}
+Platform: ${platform || 'Google/Yelp'}
+Reviewer name: ${reviewerName || 'Customer'}
+Rating: ${typeof rating === 'number' ? `${rating}/5` : 'Not provided'}
 
-  const prompt = `You are a reputation management assistant for ${businessName}.
-Write a ${selectedTone} response to the following ${review.platform} review.
-Keep it under 100 words, don't use generic phrases like "we value your feedback", and make it feel human and specific.
+Review:
+${reviewText}
 
-Reviewer: ${review.reviewer_name}
-Rating: ${review.rating}/5 stars
-Review: "${review.review_text}"
+Requirements:
+- Address the reviewer naturally.
+- Reference the review content specifically.
+- If the review is positive, thank them and reinforce the business value.
+- If the review is negative, acknowledge the issue calmly and invite them to continue the conversation offline.
+- Do not include placeholders like [Business Name] unless the business name is unknown and necessary.
+- Return only the response text.
+`.trim()
+}
 
-Write only the response, nothing else.`
+export async function POST(request: NextRequest) {
+  try {
+    const body = (await request.json().catch(() => null)) as
+      | GenerateRequestBody
+      | null
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 200
-  })
+    if (!body) {
+      return NextResponse.json(
+        {
+          error: 'Missing request body.',
+        },
+        {
+          status: 400,
+        }
+      )
+    }
 
-  const aiResponse = completion.choices[0].message.content
+    const tone: Tone = isTone(body.tone) ? body.tone : 'professional'
 
-  // Save response + increment usage
-  const [{ data: updated }] = await Promise.all([
-    supabase.from('reviews')
-      .update({ ai_response: aiResponse, response_status: 'generated' })
-      .eq('id', review_id)
-      .select()
-      .single(),
-    supabase.from('profiles')
-      .update({ responses_used: (profile.responses_used || 0) + 1 })
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      return NextResponse.json(
+        {
+          error: 'You must be logged in to generate responses.',
+        },
+        {
+          status: 401,
+        }
+      )
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, plan, plan_status, responses_used, usage_reset_date')
       .eq('id', user.id)
-  ])
+      .single<ProfileRow>()
 
-  return NextResponse.json({ response: aiResponse, review: updated })
+    if (profileError || !profile) {
+      console.error('[reviews-generate] Failed to load profile:', profileError)
+
+      return NextResponse.json(
+        {
+          error: 'Could not load your profile.',
+        },
+        {
+          status: 500,
+        }
+      )
+    }
+
+    const needsUsageReset = shouldResetUsage(profile.usage_reset_date)
+    const currentUsage = needsUsageReset ? 0 : profile.responses_used || 0
+    const monthlyLimit = getMonthlyLimit(profile)
+
+    if (monthlyLimit !== -1 && currentUsage >= monthlyLimit) {
+      return NextResponse.json(
+        {
+          error:
+            'You have reached your monthly response limit. Upgrade your plan to generate more responses.',
+        },
+        {
+          status: 402,
+        }
+      )
+    }
+
+    let review: ReviewRow | null = null
+
+    if (body.reviewId) {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select(
+          'id, user_id, platform, reviewer_name, rating, review_text, ai_response, response_status'
+        )
+        .eq('id', body.reviewId)
+        .eq('user_id', user.id)
+        .single<ReviewRow>()
+
+      if (error || !data) {
+        console.error('[reviews-generate] Failed to load review:', {
+          reviewId: body.reviewId,
+          userId: user.id,
+          error,
+        })
+
+        return NextResponse.json(
+          {
+            error: 'Could not find this review.',
+          },
+          {
+            status: 404,
+          }
+        )
+      }
+
+      review = data
+    }
+
+    const reviewText = review?.review_text || body.reviewText?.trim()
+
+    if (!reviewText) {
+      return NextResponse.json(
+        {
+          error: 'Review text is required.',
+        },
+        {
+          status: 400,
+        }
+      )
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.7,
+      max_tokens: 350,
+      messages: [
+        {
+          role: 'system',
+          content: buildSystemPrompt(),
+        },
+        {
+          role: 'user',
+          content: buildUserPrompt({
+            reviewText,
+            reviewerName: review?.reviewer_name || body.reviewerName,
+            rating: review?.rating || body.rating,
+            platform: review?.platform || body.platform,
+            tone,
+          }),
+        },
+      ],
+    })
+
+    const aiResponse = completion.choices[0]?.message?.content?.trim()
+
+    if (!aiResponse) {
+      console.error('[reviews-generate] OpenAI returned empty response:', {
+        userId: user.id,
+        reviewId: body.reviewId,
+      })
+
+      return NextResponse.json(
+        {
+          error: 'AI response generation failed. Please try again.',
+        },
+        {
+          status: 500,
+        }
+      )
+    }
+
+    if (review?.id) {
+      const { error: updateReviewError } = await supabase
+        .from('reviews')
+        .update({
+          ai_response: aiResponse,
+          response_status: 'generated',
+        })
+        .eq('id', review.id)
+        .eq('user_id', user.id)
+
+      if (updateReviewError) {
+        console.error(
+          '[reviews-generate] Failed to update existing review:',
+          updateReviewError
+        )
+
+        return NextResponse.json(
+          {
+            error: 'Generated response, but could not save it to the review.',
+          },
+          {
+            status: 500,
+          }
+        )
+      }
+    }
+
+    const { error: updateUsageError } = await supabase
+      .from('profiles')
+      .update({
+        responses_used: currentUsage + 1,
+        usage_reset_date: needsUsageReset
+          ? getNextUsageResetDate()
+          : profile.usage_reset_date,
+      })
+      .eq('id', user.id)
+
+    if (updateUsageError) {
+      console.error('[reviews-generate] Failed to update usage:', updateUsageError)
+    }
+
+    return NextResponse.json({
+      response: aiResponse,
+      aiResponse,
+      reviewId: review?.id || null,
+      responsesUsed: currentUsage + 1,
+    })
+  } catch (error) {
+    console.error('[reviews-generate] Unexpected error:', error)
+
+    return NextResponse.json(
+      {
+        error: 'Something went wrong while generating the response.',
+      },
+      {
+        status: 500,
+      }
+    )
+  }
 }
