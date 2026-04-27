@@ -9,6 +9,7 @@ type ProfileLike = {
 }
 
 type UpgradeBannerProps = {
+  plan?: string | null
   currentPlan?: string | null
   responsesUsed?: number | null
   limit?: number | null
@@ -18,6 +19,7 @@ type UpgradeBannerProps = {
 const planOrder: PlanKey[] = ['starter', 'pro', 'agency']
 
 export default function UpgradeBanner({
+  plan,
   currentPlan,
   responsesUsed,
   limit,
@@ -27,8 +29,8 @@ export default function UpgradeBanner({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const activePlan = useMemo(() => {
-    return profile?.plan || currentPlan || 'free'
-  }, [profile?.plan, currentPlan])
+    return profile?.plan || currentPlan || plan || 'free'
+  }, [profile?.plan, currentPlan, plan])
 
   const usage = useMemo(() => {
     return profile?.responses_used ?? responsesUsed ?? 0
@@ -36,12 +38,12 @@ export default function UpgradeBanner({
 
   const normalizedLimit = typeof limit === 'number' ? limit : null
 
-  const handleUpgrade = async (plan: PlanKey) => {
+  const handleUpgrade = async (selectedPlan: PlanKey) => {
     setErrorMessage(null)
-    setLoadingPlan(plan)
+    setLoadingPlan(selectedPlan)
 
     console.log('[UpgradeBanner] Starting upgrade:', {
-      plan,
+      selectedPlan,
     })
 
     try {
@@ -50,7 +52,7 @@ export default function UpgradeBanner({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan: selectedPlan }),
       })
 
       const data = (await response.json().catch(() => null)) as {
@@ -116,7 +118,10 @@ export default function UpgradeBanner({
               {normalizedLimit && normalizedLimit > 0 ? (
                 <>
                   {' '}
-                  of <span className="font-medium text-zinc-900">{normalizedLimit}</span>{' '}
+                  of{' '}
+                  <span className="font-medium text-zinc-900">
+                    {normalizedLimit}
+                  </span>{' '}
                   responses used this month.
                 </>
               ) : (
@@ -134,7 +139,7 @@ export default function UpgradeBanner({
 
         <div className="grid w-full gap-3 sm:grid-cols-3 lg:max-w-2xl">
           {planOrder.map((planKey) => {
-            const plan = PLANS[planKey]
+            const planConfig = PLANS[planKey]
             const isCurrentPlan = activePlan === planKey
             const isLoading = loadingPlan === planKey
 
@@ -149,10 +154,10 @@ export default function UpgradeBanner({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-zinc-950">
-                      {plan.name}
+                      {planConfig.name}
                     </p>
                     <p className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">
-                      ${plan.price}
+                      ${planConfig.price}
                       <span className="text-sm font-normal text-zinc-500">
                         /mo
                       </span>
@@ -167,9 +172,9 @@ export default function UpgradeBanner({
                 </div>
 
                 <p className="mt-3 text-xs leading-5 text-zinc-500">
-                  {plan.limit === -1
+                  {planConfig.limit === -1
                     ? 'Unlimited AI responses'
-                    : `${plan.limit} AI responses per month`}
+                    : `${planConfig.limit} AI responses per month`}
                 </p>
 
                 <div className="mt-4 text-sm font-medium text-zinc-950">
@@ -177,7 +182,7 @@ export default function UpgradeBanner({
                     ? 'Active plan'
                     : isLoading
                       ? 'Opening checkout...'
-                      : `Get ${plan.name}`}
+                      : `Get ${planConfig.name}`}
                 </div>
               </button>
             )
