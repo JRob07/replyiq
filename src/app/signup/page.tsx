@@ -1,8 +1,10 @@
 'use client'
-import { useState, Suspense } from 'react'
+
+import { Suspense, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 
 function SignupForm() {
   const [email, setEmail] = useState('')
@@ -14,98 +16,107 @@ function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const plan = searchParams.get('plan')
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const handleSignup = async () => {
+    if (!email.trim() || !password.trim()) {
+      setError('Email and password are required.')
+      return
+    }
+
     setLoading(true)
     setError('')
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
+    const { data, error: signupError } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
       password,
-      options: { data: { full_name: fullName, business_name: businessName } }
+      options: { data: { full_name: fullName.trim(), business_name: businessName.trim() } },
     })
 
-    if (error) { setError(error.message); setLoading(false); return }
-
-    if (data.user) {
-      await supabase.from('profiles').upsert({
-        id: data.user.id,
-        email,
-        full_name: fullName,
-        business_name: businessName
-      }, { onConflict: 'id' })
-
-      if (plan && ['starter', 'pro', 'agency'].includes(plan)) {
-        // Redirect to checkout for selected plan
-        const res = await fetch('/api/billing/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan })
-        })
-        const checkoutData = await res.json()
-        if (checkoutData.url) {
-          window.location.href = checkoutData.url
-          return
-        }
-      }
-
-      router.push('/dashboard')
-    } else {
-      setError('Something went wrong. Please try again.')
+    if (signupError) {
+      setError(signupError.message)
       setLoading(false)
+      return
     }
+
+    if (!data.user) {
+      setError('Account created. Please check your email to confirm your account before logging in.')
+      setLoading(false)
+      return
+    }
+
+    await supabase.from('profiles').upsert(
+      {
+        id: data.user.id,
+        email: email.trim().toLowerCase(),
+        full_name: fullName.trim(),
+        business_name: businessName.trim(),
+      },
+      { onConflict: 'id' }
+    )
+
+    if (plan && ['starter', 'pro', 'agency'].includes(plan)) {
+      const response = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      })
+      const checkoutData = (await response.json().catch(() => null)) as { url?: string; error?: string } | null
+      if (checkoutData?.url) {
+        window.location.href = checkoutData.url
+        return
+      }
+    }
+
+    router.push('/dashboard')
+    router.refresh()
   }
 
+  const formattedPlan = plan ? `${plan.charAt(0).toUpperCase()}${plan.slice(1)}` : null
+
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+    <main className="noise-bg flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white">ReplyIQ</h1>
-          <p className="text-gray-400 mt-2">
-            {plan ? `Get started with the ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan` : 'Start responding smarter'}
+        <div className="mb-8 text-center">
+          <Link href="/" className="text-3xl font-extrabold tracking-tight text-zinc-950">
+            Reply<span className="text-zinc-500">IQ</span>
+          </Link>
+          <p className="mt-3 text-sm font-semibold text-zinc-500">
+            {formattedPlan ? `Create your ${formattedPlan} account.` : 'Start responding smarter.'}
           </p>
         </div>
-        <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
-          {error && <p className="text-red-400 text-sm mb-4 bg-red-950 p-3 rounded-lg">{error}</p>}
-          <div className="space-y-4">
+
+        <div className="rounded-[2rem] border border-zinc-200 bg-white p-8 shadow-2xl shadow-zinc-950/5">
+          {error ? <p className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">{error}</p> : null}
+
+          <div className="space-y-5">
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Full Name</label>
-              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                placeholder="Jeremy Robinson" />
+              <label className="mb-2 block text-sm font-bold text-zinc-700">Full name</label>
+              <input value={fullName} onChange={(event) => setFullName(event.target.value)} className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-4 focus:ring-zinc-100" placeholder="Jeremy Robinson" />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Business Name</label>
-              <input type="text" value={businessName} onChange={e => setBusinessName(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                placeholder="Acme HVAC" />
+              <label className="mb-2 block text-sm font-bold text-zinc-700">Business name</label>
+              <input value={businessName} onChange={(event) => setBusinessName(event.target.value)} className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-4 focus:ring-zinc-100" placeholder="Apex Automations" />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                placeholder="you@business.com" />
+              <label className="mb-2 block text-sm font-bold text-zinc-700">Email</label>
+              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-4 focus:ring-zinc-100" placeholder="you@business.com" />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSignup()}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                placeholder="••••••••" />
+              <label className="mb-2 block text-sm font-bold text-zinc-700">Password</label>
+              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && handleSignup()} className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-4 focus:ring-zinc-100" placeholder="••••••••" />
             </div>
-            <button onClick={handleSignup} disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition-colors">
-              {loading ? 'Creating account...' : plan ? `Create Account & Continue to Payment` : 'Create Account'}
+            <button onClick={handleSignup} disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-950 px-5 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-zinc-800 disabled:opacity-60">
+              {loading ? 'Creating account...' : formattedPlan ? 'Create account & continue' : 'Create account'}
+              {!loading ? <ArrowRight className="h-4 w-4" /> : null}
             </button>
           </div>
-          <p className="text-center text-gray-500 text-sm mt-6">
-            Already have an account?{' '}
-            <Link href="/login" className="text-blue-400 hover:text-blue-300">Sign in</Link>
+          <p className="mt-6 text-center text-sm font-semibold text-zinc-500">
+            Already have an account? <Link href="/login" className="text-zinc-950 underline underline-offset-4">Sign in</Link>
           </p>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
 

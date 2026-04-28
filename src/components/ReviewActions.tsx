@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { RefreshCw, Trash2 } from 'lucide-react'
 
 type Tone = 'professional' | 'friendly' | 'apologetic'
 
@@ -10,74 +11,37 @@ type ReviewActionsProps = {
   onChanged?: () => void | Promise<void>
 }
 
-const toneOptions: Array<{
-  value: Tone
-  label: string
-}> = [
-  {
-    value: 'professional',
-    label: 'Professional',
-  },
-  {
-    value: 'friendly',
-    label: 'Friendly',
-  },
-  {
-    value: 'apologetic',
-    label: 'Apologetic',
-  },
+const toneOptions: Array<{ value: Tone; label: string }> = [
+  { value: 'professional', label: 'Professional' },
+  { value: 'friendly', label: 'Friendly' },
+  { value: 'apologetic', label: 'Apologetic' },
 ]
 
-export default function ReviewActions({
-  reviewId,
-  hasResponse = false,
-  onChanged,
-}: ReviewActionsProps) {
+export default function ReviewActions({ reviewId, hasResponse = false, onChanged }: ReviewActionsProps) {
   const [selectedTone, setSelectedTone] = useState<Tone>('professional')
   const [isDeleting, setIsDeleting] = useState(false)
   const [isRegenerating, setIsRegenerating] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const refreshData = async () => {
-    if (onChanged) {
-      await onChanged()
-    }
+    if (onChanged) await onChanged()
   }
 
   const handleDelete = async () => {
-    const confirmed = window.confirm(
-      'Delete this review? This action cannot be undone.'
-    )
-
-    if (!confirmed) {
-      return
-    }
+    const confirmed = window.confirm('Delete this review? This action cannot be undone.')
+    if (!confirmed) return
 
     setErrorMessage(null)
     setIsDeleting(true)
 
     try {
-      const response = await fetch(`/api/reviews/${reviewId}`, {
-        method: 'DELETE',
-      })
-
-      const data = (await response.json().catch(() => null)) as {
-        error?: string
-      } | null
-
-      if (!response.ok) {
-        throw new Error(data?.error || 'Could not delete this review.')
-      }
-
+      const response = await fetch(`/api/reviews/${reviewId}`, { method: 'DELETE' })
+      const data = (await response.json().catch(() => null)) as { error?: string } | null
+      if (!response.ok) throw new Error(data?.error || 'Could not delete this review.')
       await refreshData()
     } catch (error) {
       console.error('[ReviewActions] Delete failed:', error)
-
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : 'Could not delete this review. Please try again.'
-      )
+      setErrorMessage(error instanceof Error ? error.message : 'Could not delete this review.')
     } finally {
       setIsDeleting(false)
     }
@@ -90,32 +54,16 @@ export default function ReviewActions({
     try {
       const response = await fetch('/api/reviews/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reviewId,
-          tone: selectedTone,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId, tone: selectedTone }),
       })
 
-      const data = (await response.json().catch(() => null)) as {
-        error?: string
-      } | null
-
-      if (!response.ok) {
-        throw new Error(data?.error || 'Could not generate this response.')
-      }
-
+      const data = (await response.json().catch(() => null)) as { error?: string } | null
+      if (!response.ok) throw new Error(data?.error || 'Could not generate this response.')
       await refreshData()
     } catch (error) {
       console.error('[ReviewActions] Generate/regenerate failed:', error)
-
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : 'Could not generate this response. Please try again.'
-      )
+      setErrorMessage(error instanceof Error ? error.message : 'Could not generate this response.')
     } finally {
       setIsRegenerating(false)
     }
@@ -128,12 +76,10 @@ export default function ReviewActions({
           <select
             value={selectedTone}
             onChange={(event) => setSelectedTone(event.target.value as Tone)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
+            className="rounded-full border border-zinc-200 bg-white px-4 py-2.5 text-sm font-extrabold text-zinc-800 outline-none transition focus:border-zinc-400 focus:ring-4 focus:ring-zinc-100"
           >
             {toneOptions.map((tone) => (
-              <option key={tone.value} value={tone.value}>
-                {tone.label}
-              </option>
+              <option key={tone.value} value={tone.value}>{tone.label}</option>
             ))}
           </select>
 
@@ -141,15 +87,10 @@ export default function ReviewActions({
             type="button"
             onClick={handleRegenerate}
             disabled={isRegenerating || isDeleting}
-            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-lg transition-colors text-sm"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-zinc-800 disabled:opacity-60"
           >
-            {isRegenerating
-              ? hasResponse
-                ? 'Regenerating...'
-                : 'Generating...'
-              : hasResponse
-                ? 'Regenerate Response'
-                : '✨ Generate Response'}
+            <RefreshCw className={`h-4 w-4 ${isRegenerating ? 'animate-spin' : ''}`} />
+            {isRegenerating ? (hasResponse ? 'Regenerating...' : 'Generating...') : hasResponse ? 'Regenerate response' : 'Generate response'}
           </button>
         </div>
 
@@ -157,17 +98,14 @@ export default function ReviewActions({
           type="button"
           onClick={handleDelete}
           disabled={isDeleting || isRegenerating}
-          className="border border-red-700 bg-red-950 hover:bg-red-900 disabled:opacity-50 text-red-300 font-semibold px-5 py-2 rounded-lg transition-colors text-sm"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-5 py-2.5 text-sm font-extrabold text-rose-700 transition hover:-translate-y-0.5 hover:bg-rose-100 disabled:opacity-60"
         >
+          <Trash2 className="h-4 w-4" />
           {isDeleting ? 'Deleting...' : 'Delete'}
         </button>
       </div>
 
-      {errorMessage ? (
-        <div className="rounded-lg border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-400">
-          {errorMessage}
-        </div>
-      ) : null}
+      {errorMessage ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{errorMessage}</div> : null}
     </div>
   )
 }

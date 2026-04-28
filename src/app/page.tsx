@@ -1,367 +1,217 @@
 import Link from 'next/link'
+import { ArrowRight, Check, Sparkles, Star, Workflow } from 'lucide-react'
+import { PLANS } from '@/lib/plans'
 
-export default function LandingPage() {
+const steps = [
+  {
+    title: 'Paste or import reviews',
+    description:
+      'Start manually today, then connect Google Business Profile when you are ready for automated imports.',
+  },
+  {
+    title: 'Choose the right tone',
+    description:
+      'Professional, Friendly, and Apologetic response styles help match the moment.',
+  },
+  {
+    title: 'Copy, post, and stay consistent',
+    description:
+      'Generate polished responses in seconds and keep your business reputation active.',
+  },
+]
+
+export default function HomePage() {
   return (
-    <div className="min-h-screen" style={{
-      background: '#060910',
-      fontFamily: "'Georgia', serif"
-    }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { background: #060910; }
+    <main className="min-h-screen overflow-hidden bg-[#fbfaf7] text-zinc-950">
+      <nav className="sticky top-0 z-50 border-b border-zinc-200/70 bg-[#fbfaf7]/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="text-xl font-extrabold tracking-tight">
+            Reply<span className="text-zinc-500">IQ</span>
+          </Link>
 
-        .font-display { font-family: 'DM Serif Display', Georgia, serif; }
-        .font-sans { font-family: 'DM Sans', system-ui, sans-serif; }
-
-        .hero-glow {
-          position: absolute;
-          width: 600px;
-          height: 600px;
-          border-radius: 50%;
-          filter: blur(120px);
-          opacity: 0.15;
-          pointer-events: none;
-        }
-
-        .card-glass {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.07);
-          backdrop-filter: blur(10px);
-        }
-
-        .card-glass:hover {
-          background: rgba(255,255,255,0.05);
-          border-color: rgba(255,255,255,0.12);
-          transform: translateY(-2px);
-          transition: all 0.2s ease;
-        }
-
-        .btn-primary {
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
-          color: white;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 600;
-          padding: 14px 28px;
-          border-radius: 10px;
-          text-decoration: none;
-          display: inline-block;
-          transition: all 0.2s ease;
-          box-shadow: 0 0 30px rgba(59,130,246,0.3);
-        }
-
-        .btn-primary:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 0 40px rgba(59,130,246,0.5);
-        }
-
-        .btn-secondary {
-          background: transparent;
-          color: rgba(255,255,255,0.6);
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 500;
-          padding: 14px 28px;
-          border-radius: 10px;
-          text-decoration: none;
-          display: inline-block;
-          border: 1px solid rgba(255,255,255,0.12);
-          transition: all 0.2s ease;
-        }
-
-        .btn-secondary:hover {
-          color: white;
-          border-color: rgba(255,255,255,0.3);
-        }
-
-        .nav-link {
-          color: rgba(255,255,255,0.5);
-          font-family: 'DM Sans', sans-serif;
-          font-size: 14px;
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-
-        .nav-link:hover { color: white; }
-
-        .tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          background: rgba(59,130,246,0.1);
-          border: 1px solid rgba(59,130,246,0.2);
-          color: #60a5fa;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          padding: 6px 14px;
-          border-radius: 100px;
-        }
-
-        .divider {
-          height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-        }
-
-        .popular-badge {
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
-          color: white;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.05em;
-          padding: 4px 12px;
-          border-radius: 100px;
-        }
-
-        .star { color: #f59e0b; }
-
-        .grid-3 {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 24px;
-        }
-
-        @media (max-width: 768px) {
-          .grid-3 { grid-template-columns: 1fr; }
-          .hero-title { font-size: 2.5rem !important; }
-          .hide-mobile { display: none; }
-        }
-      `}</style>
-
-      {/* Nav */}
-      <nav style={{
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        background: 'rgba(6,9,16,0.8)',
-        backdropFilter: 'blur(20px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        padding: '0 24px'
-      }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
-          <Link href="/" style={{ textDecoration: 'none' }}>
-  <span className="font-display" style={{ color: 'white', fontSize: 22, letterSpacing: '-0.02em' }}>
-    Reply<span style={{ color: '#60a5fa' }}>IQ</span>
-  </span>
-</Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-            <a href="#pricing" className="nav-link hide-mobile">Pricing</a>
-            <Link href="/login" className="nav-link">Sign In</Link>
-            <Link href="/signup" className="btn-primary" style={{ padding: '8px 18px', fontSize: 14 }}>Start Free</Link>
+          <div className="hidden items-center gap-8 md:flex">
+            <a href="#how" className="text-sm font-semibold text-zinc-600 hover:text-zinc-950">
+              How it works
+            </a>
+            <a href="#pricing" className="text-sm font-semibold text-zinc-600 hover:text-zinc-950">
+              Pricing
+            </a>
+            <Link href="/login" className="text-sm font-semibold text-zinc-600 hover:text-zinc-950">
+              Sign in
+            </Link>
           </div>
+
+          <Link
+            href="/signup"
+            className="rounded-full bg-zinc-950 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-zinc-800"
+          >
+            Start free
+          </Link>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section style={{ position: 'relative', overflow: 'hidden', padding: '100px 24px 80px' }}>
-        <div className="hero-glow" style={{ background: '#3b82f6', top: -100, left: '20%' }} />
-        <div className="hero-glow" style={{ background: '#8b5cf6', top: 100, right: '10%' }} />
-
-        <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
-          <div className="tag" style={{ marginBottom: 28 }}>
-            ✦ AI-powered review responses
+      <section className="noise-bg relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+        <div className="absolute left-1/2 top-16 h-64 w-64 -translate-x-1/2 rounded-full bg-white/60 blur-3xl" />
+        <div className="relative mx-auto max-w-5xl text-center">
+          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/75 px-4 py-2 text-sm font-bold text-zinc-700 shadow-sm">
+            <Sparkles className="h-4 w-4" />
+            AI review responses for local businesses
           </div>
 
-          <h1 className="font-display hero-title" style={{
-            fontSize: '4rem',
-            color: 'white',
-            lineHeight: 1.1,
-            letterSpacing: '-0.03em',
-            marginBottom: 24
-          }}>
-            Stop ignoring your<br />
-            <span style={{ color: '#60a5fa', fontStyle: 'italic' }}>Google Reviews</span>
+          <h1 className="font-display text-5xl font-semibold leading-[0.98] tracking-[-0.04em] text-zinc-950 sm:text-7xl lg:text-8xl">
+            Turn every review into a polished reply.
           </h1>
 
-          <p className="font-sans" style={{
-            fontSize: 18,
-            color: 'rgba(255,255,255,0.5)',
-            lineHeight: 1.7,
-            marginBottom: 40,
-            maxWidth: 560,
-            margin: '0 auto 40px'
-          }}>
-            ReplyIQ writes professional, personalized responses to your reviews in seconds — so you never leave a customer unanswered again.
+          <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-zinc-600 sm:text-xl">
+            ReplyIQ helps HVAC companies, dentists, salons, restaurants, and local service businesses respond to Google and Yelp reviews in seconds.
           </p>
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/signup" className="btn-primary" style={{ fontSize: 16 }}>
-              Start Free — No Card Required
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-zinc-950 px-7 py-4 text-sm font-extrabold text-white shadow-xl shadow-zinc-950/10 transition hover:-translate-y-0.5 hover:bg-zinc-800"
+            >
+              Start free — no card required
+              <ArrowRight className="h-4 w-4" />
             </Link>
-            <a href="#pricing" className="btn-secondary" style={{ fontSize: 16 }}>
-              See Pricing
+            <a
+              href="#pricing"
+              className="inline-flex items-center justify-center rounded-full border border-zinc-200 bg-white px-7 py-4 text-sm font-extrabold text-zinc-950 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300"
+            >
+              View pricing
             </a>
           </div>
 
-          <p className="font-sans" style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13, marginTop: 16 }}>
-            3 free responses included · No credit card required
-          </p>
+          <div className="mx-auto mt-14 grid max-w-4xl gap-4 rounded-[2rem] border border-zinc-200 bg-white/75 p-4 text-left shadow-2xl shadow-zinc-950/5 backdrop-blur md:grid-cols-3">
+            {[
+              ['3 tones', 'Professional, Friendly, and Apologetic'],
+              ['Manual + API-ready', 'Built for Google Business Profile automation'],
+              ['Agency-ready', 'Designed for client account expansion'],
+            ].map(([title, copy]) => (
+              <div key={title} className="rounded-3xl bg-zinc-50 p-5">
+                <p className="text-sm font-extrabold text-zinc-950">{title}</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">{copy}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <div className="divider" style={{ margin: '0 24px' }} />
-
-      {/* How it works */}
-      <section style={{ padding: '80px 24px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 56 }}>
-          <h2 className="font-display" style={{ fontSize: '2.5rem', color: 'white', letterSpacing: '-0.02em', marginBottom: 12 }}>
-            How it works
-          </h2>
-          <p className="font-sans" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>
-            Three steps to a perfect response, every time
+      <section id="how" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <p className="text-sm font-extrabold uppercase tracking-[0.25em] text-zinc-500">Workflow</p>
+            <h2 className="font-display mt-3 text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl">
+              Built for busy owners.
+            </h2>
+          </div>
+          <p className="max-w-xl text-base leading-7 text-zinc-600">
+            The MVP starts with manual review entry. The next automation layer connects Google Business Profile so reviews can flow into the dashboard.
           </p>
         </div>
 
-        <div className="grid-3">
-          {[
-            { step: '01', title: 'Paste your review', desc: 'Copy any Google or Yelp review and paste it into ReplyIQ. Takes 10 seconds.' },
-            { step: '02', title: 'Pick your tone', desc: 'Choose Professional, Friendly, or Apologetic — the AI adapts its language accordingly.' },
-            { step: '03', title: 'Copy & post', desc: 'Your personalized response is ready in seconds. Copy and paste directly to Google or Yelp.' },
-          ].map(item => (
-            <div key={item.step} className="card-glass" style={{ padding: 32, borderRadius: 16 }}>
-              <div className="font-display" style={{ fontSize: 48, color: 'rgba(96,165,250,0.3)', marginBottom: 16, lineHeight: 1 }}>
-                {item.step}
+        <div className="grid gap-5 md:grid-cols-3">
+          {steps.map((step, index) => (
+            <div key={step.title} className="premium-card rounded-[2rem] p-7 transition hover:-translate-y-1">
+              <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 text-sm font-extrabold text-white">
+                {String(index + 1).padStart(2, '0')}
               </div>
-              <h3 className="font-display" style={{ fontSize: 20, color: 'white', marginBottom: 10, letterSpacing: '-0.01em' }}>
-                {item.title}
-              </h3>
-              <p className="font-sans" style={{ color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, fontSize: 15 }}>
-                {item.desc}
-              </p>
+              <h3 className="text-xl font-extrabold text-zinc-950">{step.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-zinc-600">{step.description}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <div className="divider" style={{ margin: '0 24px' }} />
-
-      {/* Testimonials */}
-      <section style={{ padding: '80px 24px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 56 }}>
-          <h2 className="font-display" style={{ fontSize: '2.5rem', color: 'white', letterSpacing: '-0.02em', marginBottom: 12 }}>
-            Local businesses love ReplyIQ
-          </h2>
-        </div>
-
-        <div className="grid-3">
-          {[
-            { quote: "I used to spend 30 minutes a day on reviews. Now it takes 2 minutes. ReplyIQ pays for itself every single week.", name: "Mike T.", business: "HVAC Contractor, Cincinnati" },
-            { quote: "My response rate went from 20% to 100% in the first month. My Google ranking actually improved.", name: "Sarah K.", business: "Med Spa Owner, Dallas" },
-            { quote: "We manage reviews for 12 clients. The agency plan saves us hours every week — it's a no-brainer.", name: "James R.", business: "Marketing Agency, Phoenix" },
-          ].map((t, i) => (
-            <div key={i} className="card-glass" style={{ padding: 28, borderRadius: 16 }}>
-              <div className="star" style={{ fontSize: 14, marginBottom: 14, letterSpacing: 2 }}>★★★★★</div>
-              <p className="font-sans" style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, fontSize: 15, marginBottom: 20, fontStyle: 'italic' }}>
-                "{t.quote}"
-              </p>
-              <p className="font-sans" style={{ color: 'white', fontWeight: 600, fontSize: 14 }}>{t.name}</p>
-              <p className="font-sans" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>{t.business}</p>
+      <section className="bg-zinc-950 px-4 py-20 text-white sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-bold text-zinc-200">
+              <Workflow className="h-4 w-4" />
+              Reputation operations
             </div>
-          ))}
+            <h2 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">
+              The simple system behind a stronger online reputation.
+            </h2>
+            <p className="mt-5 text-base leading-8 text-zinc-400">
+              ReplyIQ gives owners and agencies a repeatable process for review responses today, with Google Business Profile integration staged into the codebase for the next production phase.
+            </p>
+          </div>
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-2xl">
+            <div className="rounded-3xl bg-white p-6 text-zinc-950">
+              <div className="mb-4 flex items-center gap-1 text-amber-500">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star key={star} className="h-4 w-4 fill-current" />
+                ))}
+              </div>
+              <p className="text-sm leading-7 text-zinc-700">
+                “The technician was on time, professional, and explained everything clearly. Great service.”
+              </p>
+              <div className="mt-5 rounded-2xl bg-zinc-50 p-4">
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-zinc-500">ReplyIQ response</p>
+                <p className="mt-2 text-sm leading-7 text-zinc-700">
+                  Thank you for the kind words. We are glad our technician was able to arrive on time and explain everything clearly. We appreciate your business and look forward to helping again whenever you need us.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <div className="divider" style={{ margin: '0 24px' }} />
-
-      {/* Pricing */}
-      <section id="pricing" style={{ padding: '80px 24px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 56 }}>
-          <h2 className="font-display" style={{ fontSize: '2.5rem', color: 'white', letterSpacing: '-0.02em', marginBottom: 12 }}>
-            Simple pricing
+      <section id="pricing" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto mb-12 max-w-2xl text-center">
+          <p className="text-sm font-extrabold uppercase tracking-[0.25em] text-zinc-500">Pricing</p>
+          <h2 className="font-display mt-3 text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl">
+            Start lean. Upgrade when review volume grows.
           </h2>
-          <p className="font-sans" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16 }}>
-            Start free. Upgrade when you're ready.
-          </p>
         </div>
-
-        <div className="grid-3">
-          {[
-            {
-              name: 'Starter', price: '$19', period: '/mo', plan: 'starter',
-              features: ['25 AI responses/month', 'Google & Yelp reviews', '3 response tones', 'Copy to clipboard'],
-              cta: 'Get Started', popular: false,
-              style: { padding: 32, borderRadius: 16 }
-            },
-            {
-              name: 'Pro', price: '$49', period: '/mo', plan: 'pro',
-              features: ['Unlimited AI responses', 'Google & Yelp reviews', '3 response tones', 'Priority support', 'Multi-location ready'],
-              cta: 'Get Pro', popular: true,
-              style: { padding: 32, borderRadius: 16, background: 'rgba(59,130,246,0.08)', borderColor: 'rgba(59,130,246,0.3)' }
-            },
-            {
-              name: 'Agency', price: '$149', period: '/mo', plan: 'agency',
-              features: ['Unlimited AI responses', 'Up to 20 client accounts', 'White-label branding', 'Custom subdomain', 'Priority support'],
-              cta: 'Get Agency', popular: false,
-              style: { padding: 32, borderRadius: 16 }
-            },
-          ].map(plan => (
-            <div key={plan.name} className="card-glass" style={plan.style}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <h3 className="font-sans" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 500, fontSize: 14, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  {plan.name}
-                </h3>
-                {plan.popular && <span className="popular-badge">Most Popular</span>}
+        <div className="grid gap-5 lg:grid-cols-3">
+          {Object.entries(PLANS).map(([key, plan]) => (
+            <div
+              key={key}
+              className={`rounded-[2rem] border p-7 shadow-sm transition hover:-translate-y-1 ${
+                key === 'pro'
+                  ? 'border-zinc-950 bg-zinc-950 text-white shadow-2xl shadow-zinc-950/15'
+                  : 'border-zinc-200 bg-white text-zinc-950'
+              }`}
+            >
+              {key === 'pro' ? (
+                <div className="mb-5 inline-flex rounded-full bg-white px-3 py-1 text-xs font-extrabold text-zinc-950">
+                  Most popular
+                </div>
+              ) : null}
+              <h3 className="text-2xl font-extrabold">{plan.name}</h3>
+              <div className="mt-4 flex items-end gap-1">
+                <span className="text-5xl font-extrabold tracking-tight">${plan.price}</span>
+                <span className={key === 'pro' ? 'pb-2 text-zinc-400' : 'pb-2 text-zinc-500'}>/mo</span>
               </div>
-              <div style={{ marginBottom: 28 }}>
-                <span className="font-display" style={{ fontSize: 48, color: 'white', letterSpacing: '-0.03em' }}>{plan.price}</span>
-                <span className="font-sans" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 16 }}>{plan.period}</span>
-              </div>
-              <ul style={{ listStyle: 'none', marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {plan.features.map(f => (
-                  <li key={f} className="font-sans" style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ color: '#34d399', fontSize: 12 }}>✓</span> {f}
+              <ul className="mt-7 space-y-3">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-3 text-sm leading-6">
+                    <Check className="mt-1 h-4 w-4 flex-none" />
+                    <span className={key === 'pro' ? 'text-zinc-200' : 'text-zinc-600'}>{feature}</span>
                   </li>
                 ))}
               </ul>
               <Link
-                href={`/signup?plan=${plan.plan}`}
-                className={plan.popular ? 'btn-primary' : 'btn-secondary'}
-                style={{ width: '100%', textAlign: 'center', display: 'block' }}
+                href={`/signup?plan=${key}`}
+                className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-extrabold transition hover:-translate-y-0.5 ${
+                  key === 'pro' ? 'bg-white text-zinc-950' : 'bg-zinc-950 text-white'
+                }`}
               >
-                {plan.cta}
+                Get {plan.name}
               </Link>
             </div>
           ))}
         </div>
-        <p className="font-sans" style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 13, marginTop: 24 }}>
-          All plans include a 14-day free trial · Cancel anytime
-        </p>
       </section>
 
-      <div className="divider" style={{ margin: '0 24px' }} />
-
-      {/* CTA */}
-      <section style={{ padding: '80px 24px', maxWidth: 1100, margin: '0 auto' }}>
-        <div className="card-glass" style={{ padding: '64px 48px', borderRadius: 24, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-          <div className="hero-glow" style={{ background: '#3b82f6', width: 400, height: 400, top: -200, left: '30%', opacity: 0.08 }} />
-          <h2 className="font-display" style={{ fontSize: '3rem', color: 'white', letterSpacing: '-0.02em', marginBottom: 16 }}>
-            Ready to respond smarter?
-          </h2>
-          <p className="font-sans" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 17, marginBottom: 36 }}>
-            Join local businesses saving hours every week with AI-powered review responses.
-          </p>
-          <Link href="/signup" className="btn-primary" style={{ fontSize: 16 }}>
-            Start Free Today
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '32px 24px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-          <span className="font-display" style={{ color: 'white', fontSize: 18 }}>
-            Reply<span style={{ color: '#60a5fa' }}>IQ</span>
-          </span>
-          <p className="font-sans" style={{ color: 'rgba(255,255,255,0.2)', fontSize: 13 }}>
-            © 2026 Robinson Family Legacy LLC. All rights reserved.
-          </p>
-          <div style={{ display: 'flex', gap: 20 }}>
-            <Link href="/login" className="nav-link">Sign In</Link>
-            <Link href="/signup" className="nav-link">Sign Up</Link>
-          </div>
+      <footer className="border-t border-zinc-200 px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm text-zinc-500 md:flex-row md:items-center md:justify-between">
+          <p>© {new Date().getFullYear()} ReplyIQ. Robinson Family Legacy LLC.</p>
+          <p>Built for local service businesses and agencies.</p>
         </div>
       </footer>
-    </div>
+    </main>
   )
 }

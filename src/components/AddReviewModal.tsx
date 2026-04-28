@@ -1,10 +1,11 @@
 'use client'
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
-interface Props {
+import { useState } from 'react'
+import { X } from 'lucide-react'
+
+type Props = {
   onClose: () => void
-  onAdded: () => void
+  onAdded: () => void | Promise<void>
 }
 
 export default function AddReviewModal({ onClose, onAdded }: Props) {
@@ -16,87 +17,129 @@ export default function AddReviewModal({ onClose, onAdded }: Props) {
   const [error, setError] = useState('')
 
   const handleSubmit = async () => {
-    if (!reviewerName || !reviewText) { setError('Name and review text are required'); return }
+    if (!reviewText.trim()) {
+      setError('Review text is required.')
+      return
+    }
+
     setLoading(true)
-    const res = await fetch('/api/reviews/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        reviewer_name: reviewerName,
-        rating,
-        review_text: reviewText,
-        platform,
-        review_date: new Date().toISOString().split('T')[0]
+    setError('')
+
+    try {
+      const res = await fetch('/api/reviews/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reviewer_name: reviewerName.trim() || 'Customer',
+          rating,
+          review_text: reviewText.trim(),
+          platform,
+          review_date: new Date().toISOString().split('T')[0],
+        }),
       })
-    })
-    const data = await res.json()
-    if (data.error) { setError(data.error); setLoading(false); return }
-    onAdded()
-    onClose()
+
+      const data = (await res.json().catch(() => null)) as { error?: string } | null
+
+      if (!res.ok) {
+        throw new Error(data?.error || 'Could not add this review.')
+      }
+
+      await onAdded()
+      onClose()
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Could not add this review.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 w-full max-w-lg">
-        <h2 className="text-white font-bold text-xl mb-6">Add a Review</h2>
-        {error && <p className="text-red-400 text-sm mb-4 bg-red-950 p-3 rounded-lg">{error}</p>}
-        <div className="space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/50 px-4 py-6 backdrop-blur-sm">
+      <div className="w-full max-w-xl rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-2xl shadow-zinc-950/20 sm:p-8">
+        <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">Platform</label>
+            <p className="text-sm font-extrabold uppercase tracking-[0.22em] text-zinc-500">New review</p>
+            <h2 className="font-display mt-2 text-3xl font-semibold tracking-tight text-zinc-950">Add a customer review</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-zinc-200 p-2 text-zinc-500 transition hover:bg-zinc-50 hover:text-zinc-950"
+            aria-label="Close modal"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {error ? <p className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">{error}</p> : null}
+
+        <div className="space-y-5">
+          <div>
+            <label className="mb-2 block text-sm font-bold text-zinc-700">Platform</label>
             <select
               value={platform}
-              onChange={e => setPlatform(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500"
+              onChange={(event) => setPlatform(event.target.value)}
+              className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-950 outline-none transition focus:border-zinc-400 focus:ring-4 focus:ring-zinc-100"
             >
               <option value="google">Google</option>
               <option value="yelp">Yelp</option>
             </select>
           </div>
+
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">Reviewer Name</label>
+            <label className="mb-2 block text-sm font-bold text-zinc-700">Reviewer name</label>
             <input
               type="text"
               value={reviewerName}
-              onChange={e => setReviewerName(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              onChange={(event) => setReviewerName(event.target.value)}
+              className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-4 focus:ring-zinc-100"
               placeholder="John Smith"
             />
           </div>
+
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">Rating</label>
+            <label className="mb-2 block text-sm font-bold text-zinc-700">Rating</label>
             <div className="flex gap-2">
-              {[1,2,3,4,5].map(star => (
+              {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
+                  type="button"
                   onClick={() => setRating(star)}
-                  className={`text-2xl ${star <= rating ? 'text-yellow-400' : 'text-gray-600'}`}
-                >★</button>
+                  className={`text-3xl transition hover:-translate-y-0.5 ${star <= rating ? 'text-amber-500' : 'text-zinc-200'}`}
+                  aria-label={`${star} star rating`}
+                >
+                  ★
+                </button>
               ))}
             </div>
           </div>
+
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">Review Text</label>
+            <label className="mb-2 block text-sm font-bold text-zinc-700">Review text</label>
             <textarea
               value={reviewText}
-              onChange={e => setReviewText(e.target.value)}
-              rows={4}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+              onChange={(event) => setReviewText(event.target.value)}
+              rows={5}
+              className="w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium leading-7 text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-4 focus:ring-zinc-100"
               placeholder="Paste the review here..."
             />
           </div>
-          <div className="flex gap-3 pt-2">
+
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <button
+              type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 rounded-lg transition-colors"
+              className="flex-1 rounded-full border border-zinc-200 bg-white px-5 py-3 text-sm font-extrabold text-zinc-700 transition hover:-translate-y-0.5 hover:text-zinc-950"
             >
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition-colors"
+              className="flex-1 rounded-full bg-zinc-950 px-5 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-zinc-800 disabled:opacity-60"
             >
-              {loading ? 'Adding...' : 'Add Review'}
+              {loading ? 'Adding...' : 'Add review'}
             </button>
           </div>
         </div>
